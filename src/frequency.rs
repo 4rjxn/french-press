@@ -8,7 +8,7 @@ pub fn frequency(data_bytes: &[u8]) -> [u64; 256] {
 
 #[cfg(test)]
 
-mod tests {
+mod frequency_tester {
     use super::*;
     #[test]
     fn frequency_test_empty_byte() {
