@@ -1,4 +1,8 @@
-#[derive(PartialEq, Debug)]
+use std::{cmp::Reverse, collections::BinaryHeap};
+
+use crate::tree::Node::Leaf;
+
+#[derive(PartialEq, Debug, Eq, PartialOrd, Ord)]
 enum Node {
     Leaf {
         byte: u8,
@@ -9,6 +13,27 @@ enum Node {
         left: Box<Node>,
         right: Box<Node>,
     },
+}
+
+impl Node {
+    fn frequency(&self) -> u64 {
+        match self {
+            Leaf { frequency, .. } => *frequency,
+            Node::Internal { frequency, .. } => *frequency,
+        }
+    }
+    fn left(&self) -> Option<&Node> {
+        match self {
+            Leaf { .. } => None,
+            Node::Internal { left, .. } => Some(left),
+        }
+    }
+    fn right(&self) -> Option<&Node> {
+        match self {
+            Leaf { .. } => None,
+            Node::Internal { right, .. } => Some(right),
+        }
+    }
 }
 
 fn generate_leaf_nodes(frequencies: &[u64; 256]) -> Vec<Node> {
@@ -26,9 +51,29 @@ fn generate_leaf_nodes(frequencies: &[u64; 256]) -> Vec<Node> {
     leaf_nodes
 }
 
-#[cfg(test)]
+fn build_tree(frequencies: &[u64; 256]) -> Option<Node> {
+    let leaf_nodes = generate_leaf_nodes(frequencies);
+    let mut node_heap = BinaryHeap::new();
+    for leaf in leaf_nodes {
+        node_heap.push(Reverse(leaf));
+    }
+    while node_heap.len() > 1 {
+        let Reverse(left) = node_heap.pop().unwrap();
+        let Reverse(right) = node_heap.pop().unwrap();
+        let merged_node = Node::Internal {
+            frequency: left.frequency() + right.frequency(),
+            left: Box::new(left),
+            right: Box::new(right),
+        };
+        node_heap.push(Reverse(merged_node));
+    }
+    node_heap.pop().map(|Reverse(root)| root)
+}
 
+#[cfg(test)]
 mod tree_tester {
+    use crate::tree;
+
     use super::*;
 
     #[test]
@@ -52,5 +97,43 @@ mod tree_tester {
                 frequency: 55
             }
         )
+    }
+
+    #[test]
+    fn build_tree_on_empty_frequencies() {
+        let frequency = [0u64; 256];
+        let tree = build_tree(&frequency);
+        assert_eq!(tree, None);
+    }
+
+    #[test]
+    fn build_tree_on_single_frequency() {
+        let mut frequency = [0u64; 256];
+        frequency[55] = 55;
+        let tree = build_tree(&frequency).unwrap();
+        assert_eq!(
+            tree,
+            Node::Leaf {
+                byte: 55,
+                frequency: 55
+            }
+        );
+    }
+
+    #[test]
+    fn build_tree_on_frequencies() {
+        let mut frequency = [0u64; 256];
+        frequency[b'a' as usize] = 1;
+        frequency[b'b' as usize] = 5;
+        frequency[b'c' as usize] = 7;
+        let tree = build_tree(&frequency).unwrap();
+        assert_eq!(tree.frequency(), 13);
+
+        let Node::Internal { left, right, .. } = &tree else {
+            panic!("root node should be Internal");
+        };
+        let c_is_direct_child = matches!(**left, Node::Leaf { byte: b'c', .. })
+            || matches!(**right, Node::Leaf { byte: b'c', .. });
+        assert!(c_is_direct_child);
     }
 }
