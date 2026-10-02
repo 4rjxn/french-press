@@ -3,7 +3,7 @@ use std::{cmp::Reverse, collections::BinaryHeap};
 use crate::tree::Node::Leaf;
 
 #[derive(PartialEq, Debug, Eq, PartialOrd, Ord)]
-enum Node {
+pub(crate) enum Node {
     Leaf {
         byte: u8,
         frequency: u64,
@@ -16,19 +16,19 @@ enum Node {
 }
 
 impl Node {
-    fn frequency(&self) -> u64 {
+    pub fn frequency(&self) -> u64 {
         match self {
             Leaf { frequency, .. } => *frequency,
             Node::Internal { frequency, .. } => *frequency,
         }
     }
-    fn left(&self) -> Option<&Node> {
+    pub fn left(&self) -> Option<&Node> {
         match self {
             Leaf { .. } => None,
             Node::Internal { left, .. } => Some(left),
         }
     }
-    fn right(&self) -> Option<&Node> {
+    pub fn right(&self) -> Option<&Node> {
         match self {
             Leaf { .. } => None,
             Node::Internal { right, .. } => Some(right),
