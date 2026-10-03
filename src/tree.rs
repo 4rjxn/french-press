@@ -51,7 +51,7 @@ fn generate_leaf_nodes(frequencies: &[u64; 256]) -> Vec<Node> {
     leaf_nodes
 }
 
-fn build_tree(frequencies: &[u64; 256]) -> Option<Node> {
+pub fn build_tree(frequencies: &[u64; 256]) -> Option<Node> {
     let leaf_nodes = generate_leaf_nodes(frequencies);
     let mut node_heap = BinaryHeap::new();
     for leaf in leaf_nodes {
@@ -72,7 +72,6 @@ fn build_tree(frequencies: &[u64; 256]) -> Option<Node> {
 
 #[cfg(test)]
 mod tree_tester {
-    use crate::tree;
 
     use super::*;
 

@@ -1,12 +1,12 @@
 use crate::tree::Node;
 
 #[derive(Default, Clone, Copy)]
-struct Code {
+pub struct Code {
     bits: u64,
     len: u8,
 }
 
-fn generate_codes(node: &Node, bits: u64, len: u8, table: &mut [Code; 256]) {
+pub fn generate_codes(node: &Node, bits: u64, len: u8, table: &mut [Code; 256]) {
     match node {
         Node::Leaf { byte, .. } => {
             let len = len.max(1);
