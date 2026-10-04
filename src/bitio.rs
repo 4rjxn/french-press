@@ -14,7 +14,7 @@ impl BitWriter {
     }
     pub fn write(&mut self, bits: u64, len: u8) {
         for i in (0..len).rev() {
-            let bit = ((bits << i) & 1) as u8;
+            let bit = ((bits >> i) & 1) as u8;
             self.acc = (self.acc << 1) | bit;
             self.nbits += 1;
             if self.nbits == 8 {
