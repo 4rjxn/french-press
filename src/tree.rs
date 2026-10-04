@@ -122,17 +122,34 @@ mod tree_tester {
     #[test]
     fn build_tree_on_frequencies() {
         let mut frequency = [0u64; 256];
-        frequency[b'a' as usize] = 1;
+        frequency[b'a' as usize] = 500;
         frequency[b'b' as usize] = 5;
         frequency[b'c' as usize] = 7;
         let tree = build_tree(&frequency).unwrap();
-        assert_eq!(tree.frequency(), 13);
+        assert_eq!(tree.frequency(), 512);
 
-        let Node::Internal { left, right, .. } = &tree else {
+        let Node::Internal { .. } = &tree else {
             panic!("root node should be Internal");
         };
-        let c_is_direct_child = matches!(**left, Node::Leaf { byte: b'c', .. })
-            || matches!(**right, Node::Leaf { byte: b'c', .. });
-        assert!(c_is_direct_child);
+
+        let expected_tree = Node::Internal {
+            frequency: 512,
+            left: Box::new(Node::Leaf {
+                byte: b'a',
+                frequency: 500,
+            }),
+            right: Box::new(Node::Internal {
+                frequency: 12,
+                left: Box::new(Node::Leaf {
+                    byte: b'b',
+                    frequency: 5,
+                }),
+                right: Box::new(Node::Leaf {
+                    byte: b'c',
+                    frequency: 7,
+                }),
+            }),
+        };
+        assert_eq!(tree, expected_tree)
     }
 }
