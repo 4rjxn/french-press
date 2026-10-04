@@ -1,4 +1,4 @@
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::collections::BinaryHeap;
 
 use crate::tree::Node::Leaf;
 
@@ -74,19 +74,19 @@ pub fn build_tree(frequencies: &[u64; 256]) -> Option<Node> {
     let leaf_nodes = generate_leaf_nodes(frequencies);
     let mut node_heap = BinaryHeap::new();
     for leaf in leaf_nodes {
-        node_heap.push(Reverse(leaf));
+        node_heap.push(leaf);
     }
     while node_heap.len() > 1 {
-        let Reverse(left) = node_heap.pop().unwrap();
-        let Reverse(right) = node_heap.pop().unwrap();
+        let left = node_heap.pop().unwrap();
+        let right = node_heap.pop().unwrap();
         let merged_node = Node::Internal {
             frequency: left.frequency() + right.frequency(),
             left: Box::new(left),
             right: Box::new(right),
         };
-        node_heap.push(Reverse(merged_node));
+        node_heap.push(merged_node);
     }
-    node_heap.pop().map(|Reverse(root)| root)
+    node_heap.pop()
 }
 
 #[cfg(test)]
