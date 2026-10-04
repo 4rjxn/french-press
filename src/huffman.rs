@@ -2,8 +2,8 @@ use crate::tree::Node;
 
 #[derive(Default, Clone, Copy)]
 pub struct Code {
-    bits: u64,
-    len: u8,
+    pub bits: u64,
+    pub len: u8,
 }
 
 pub fn generate_codes(node: &Node, bits: u64, len: u8, table: &mut [Code; 256]) {
