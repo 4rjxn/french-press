@@ -33,3 +33,17 @@ impl BitWriter {
         self.bytes
     }
 }
+
+#[cfg(test)]
+mod bit_writer_tester {
+    use super::*;
+
+    #[test]
+    fn direct_byte_write_test() {
+        let byte = 0b000101011 as u64;
+        let mut writer = BitWriter::new();
+        writer.write(byte, 9);
+        let out = writer.finish();
+        assert_eq!(&out[..], [0b00010101, 0b10000000]);
+    }
+}
