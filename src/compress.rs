@@ -23,7 +23,7 @@ fn write_header(frequency: &[u64; 256]) -> Vec<u8> {
     out
 }
 
-fn compress(data_bytes: &[u8]) -> Vec<u8> {
+pub fn compress(data_bytes: &[u8]) -> Vec<u8> {
     let freq = frequency(data_bytes);
     let mut header = write_header(&freq);
     let Some(huffman_root) = build_tree(&freq) else {
@@ -34,7 +34,6 @@ fn compress(data_bytes: &[u8]) -> Vec<u8> {
     let mut writer = BitWriter::new();
     for &byte in data_bytes {
         let code = code_table[byte as usize];
-        println!("{:?}", code.bits);
         writer.write(code.bits, code.len);
     }
     header.extend(writer.finish());
