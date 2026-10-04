@@ -23,13 +23,11 @@ no input from stdin.
 ## File Layout.(draft)
 
 Header
-* u8: magic byte to verify identity.
-* u16: stores the size of the huffman tree.
-* u64: number of bits in the original data.
-* u64: number of bits in the compressed data.
+* u32: magic byte to verify identity.
+* u16: stores the number of bytes.
+* (u8,u64): the frequency table
 
 Body
-* huffman tree data.
 * compressed data.
 
 ## Modules
