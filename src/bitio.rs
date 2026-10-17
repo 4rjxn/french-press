@@ -34,8 +34,27 @@ impl BitWriter {
     }
 }
 
+pub struct BitReader {
+    bytes: Vec<u8>,
+}
+
+impl BitReader {
+    pub fn new(bytes: &[u8]) -> BitReader {
+        return BitReader {
+            bytes: bytes.to_vec(),
+        };
+    }
+
+    pub fn read(&self, index: usize) -> bool {
+        let byte_index = index / 8;
+        let shift_count = index % 8;
+        (self.bytes.get(byte_index).unwrap() << shift_count & 0x80) == 0x80
+    }
+}
+
 #[cfg(test)]
 mod bit_writer_tester {
+
     use super::*;
 
     #[test]
@@ -45,5 +64,14 @@ mod bit_writer_tester {
         writer.write(byte, 9);
         let out = writer.finish();
         assert_eq!(&out[..], [0b00010101, 0b10000000]);
+    }
+
+    #[test]
+    fn bitio_reader_test() {
+        let reader = BitReader::new(&[43]);
+        let first_value = reader.read(0);
+        let second_value = reader.read(7);
+        assert_eq!(first_value, false);
+        assert_eq!(second_value, true);
     }
 }
