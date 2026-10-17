@@ -1,7 +1,9 @@
-fn read_header(data_bytes: &[u8]) -> [u64; 256] {
+use crate::{bitio::BitReader, tree::build_tree};
+
+fn read_header(data_bytes: &[u8]) -> ([u64; 256], usize) {
     let mut freq = [0u64; 256];
     if data_bytes.len() < 6 {
-        return freq;
+        return (freq, 0);
     }
     let frequency_count = u16::from_le_bytes(data_bytes[4..6].try_into().unwrap());
     let mut char_index = 6; //the first charector byte is at 6;
@@ -14,7 +16,8 @@ fn read_header(data_bytes: &[u8]) -> [u64; 256] {
         );
         char_index += 9;
     }
-    freq
+    (freq, char_index)
+}
 }
 
 #[cfg(test)]
