@@ -66,7 +66,18 @@ mod decompress_tester {
         header.extend_from_slice(&(33 as u64).to_le_bytes());
         header.push(b'b');
         header.extend_from_slice(&(33 as u64).to_le_bytes());
-        let header_freq = read_header(&header);
+        let (header_freq, read_byte_count) = read_header(&header);
         assert_eq!(header_freq, expectied_freq);
+        assert_eq!(read_byte_count, 24);
+    }
+
+    #[test]
+    fn test_decompress_function() {
+        let data = b"french_press";
+        let compressed_data = compress::compress(data);
+        let decompressed_data = decompress(&compressed_data);
+        println!("{:?}", decompressed_data);
+        assert_eq!(data.len(), decompressed_data.len());
+        assert_eq!(decompressed_data[0], b'f');
     }
 }
