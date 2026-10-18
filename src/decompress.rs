@@ -1,9 +1,9 @@
 use crate::{bitio::BitReader, tree::build_tree};
 
-fn read_header(data_bytes: &[u8]) -> ([u64; 256], usize) {
+fn read_header(data_bytes: &[u8]) -> Option<([u64; 256], usize)> {
     let mut freq = [0u64; 256];
     if data_bytes.len() < 6 {
-        return (freq, 0);
+        return None;
     }
     let frequency_count = u16::from_le_bytes(data_bytes[4..6].try_into().unwrap());
     let mut char_index = 6; //the first charector byte is at 6;
@@ -16,15 +16,15 @@ fn read_header(data_bytes: &[u8]) -> ([u64; 256], usize) {
         );
         char_index += 9;
     }
-    (freq, char_index)
+    Some((freq, char_index))
 }
 
-pub fn decompress(data_bytes: &[u8]) -> Vec<u8> {
+pub fn decompress(data_bytes: &[u8]) -> Option<Vec<u8>> {
     let mut decompressed_data: Vec<u8> = Vec::new();
-    let (freq, header_end_byte) = read_header(data_bytes);
+    let (freq, header_end_byte) = read_header(data_bytes)?;
     let total_chars: usize = freq.iter().map(|&count| count as usize).sum();
     if total_chars == 0 {
-        return Vec::new();
+        return None;
     }
     let root = build_tree(&freq).unwrap();
     let mut reader = BitReader::new(&data_bytes[header_end_byte..]);
@@ -49,7 +49,7 @@ pub fn decompress(data_bytes: &[u8]) -> Vec<u8> {
         }
     }
 
-    decompressed_data
+    Some(decompressed_data)
 }
 
 #[cfg(test)]
@@ -72,7 +72,7 @@ mod decompress_tester {
         header.extend_from_slice(&(33 as u64).to_le_bytes());
         header.push(b'b');
         header.extend_from_slice(&(33 as u64).to_le_bytes());
-        let (header_freq, read_byte_count) = read_header(&header);
+        let (header_freq, read_byte_count) = read_header(&header).unwrap();
         assert_eq!(header_freq, expectied_freq);
         assert_eq!(read_byte_count, 24);
     }
@@ -81,7 +81,7 @@ mod decompress_tester {
     fn test_decompress_function() {
         let data = b"french_press";
         let compressed_data = compress::compress(data);
-        let decompressed_data = decompress(&compressed_data);
+        let decompressed_data = decompress(&compressed_data).unwrap();
         assert_eq!(data.len(), decompressed_data.len());
         assert_eq!(decompressed_data[0], b'f');
     }
@@ -89,15 +89,14 @@ mod decompress_tester {
     fn test_decompress_function_empty_file() {
         let data = b"";
         let compressed_data = compress::compress(data);
-        let decompressed_data = decompress(&compressed_data);
-        assert_eq!(data.len(), decompressed_data.len());
+        assert!(decompress(&compressed_data).is_none());
     }
 
     #[test]
     fn test_decompress_function_single_char_file() {
         let data = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         let compressed_data = compress::compress(data);
-        let decompressed_data = decompress(&compressed_data);
+        let decompressed_data = decompress(&compressed_data).unwrap();
         assert_eq!(data.len(), decompressed_data.len());
         assert_eq!(decompressed_data[0], b'a');
     }
