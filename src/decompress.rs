@@ -9,6 +9,9 @@ fn read_header(data_bytes: &[u8]) -> Option<([u64; 256], usize)> {
         return None;
     }
     let frequency_count = u16::from_le_bytes(data_bytes[4..6].try_into().ok()?);
+    if data_bytes.len() < 6 + (frequency_count as usize * 9) {
+        return None;
+    }
     let mut char_index = 6; //the first charector byte is at 6;
     for _ in 0..frequency_count {
         let index = data_bytes[char_index];
