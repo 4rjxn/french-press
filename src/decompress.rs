@@ -23,6 +23,9 @@ pub fn decompress(data_bytes: &[u8]) -> Vec<u8> {
     let mut decompressed_data: Vec<u8> = Vec::new();
     let (freq, header_end_byte) = read_header(data_bytes);
     let total_chars: usize = freq.iter().map(|&count| count as usize).sum();
+    if total_chars == 0 {
+        return Vec::new();
+    }
     let root = build_tree(&freq).unwrap();
     let mut reader = BitReader::new(&data_bytes[header_end_byte..]);
     let mut pointer = &root;
@@ -79,8 +82,23 @@ mod decompress_tester {
         let data = b"french_press";
         let compressed_data = compress::compress(data);
         let decompressed_data = decompress(&compressed_data);
-        println!("{:?}", decompressed_data);
         assert_eq!(data.len(), decompressed_data.len());
         assert_eq!(decompressed_data[0], b'f');
+    }
+    #[test]
+    fn test_decompress_function_empty_file() {
+        let data = b"";
+        let compressed_data = compress::compress(data);
+        let decompressed_data = decompress(&compressed_data);
+        assert_eq!(data.len(), decompressed_data.len());
+    }
+
+    #[test]
+    fn test_decompress_function_single_char_file() {
+        let data = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        let compressed_data = compress::compress(data);
+        let decompressed_data = decompress(&compressed_data);
+        assert_eq!(data.len(), decompressed_data.len());
+        assert_eq!(decompressed_data[0], b'a');
     }
 }
