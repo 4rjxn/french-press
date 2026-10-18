@@ -1,3 +1,5 @@
+use std::io::Cursor;
+
 use crate::{
     bitio::BitWriter,
     frequency::frequency,
@@ -23,11 +25,11 @@ fn write_header(frequency: &[u64; 256]) -> Vec<u8> {
     out
 }
 
-pub fn compress(data_bytes: &[u8]) -> Vec<u8> {
-    let freq = frequency(data_bytes);
+pub fn compress(data_bytes: &[u8]) -> Option<Vec<u8>> {
+    let freq = frequency(&mut Cursor::new(data_bytes)).ok()?;
     let mut header = write_header(&freq);
     let Some(huffman_root) = build_tree(&freq) else {
-        return header;
+        return Some(header);
     };
     let mut code_table = [Code::default(); 256];
     generate_codes(&huffman_root, 0, 0, &mut code_table);
@@ -37,7 +39,7 @@ pub fn compress(data_bytes: &[u8]) -> Vec<u8> {
         writer.write(code.bits, code.len);
     }
     header.extend(writer.finish());
-    header
+    Some(header)
 }
 
 #[cfg(test)]
@@ -59,8 +61,8 @@ mod compress_tester {
     #[test]
     fn test_compression() {
         let data_bytes = b"aaabbc";
-        let header = write_header(&frequency(data_bytes));
-        let compressed_data = compress(data_bytes);
+        let header = write_header(&frequency(&mut Cursor::new(data_bytes)).unwrap());
+        let compressed_data = compress(data_bytes).unwrap();
         assert_eq!(&compressed_data[0..header.len()], &header[..]);
         assert_eq!(&compressed_data[header.len()..], &[0x1F, 0x0]);
     }

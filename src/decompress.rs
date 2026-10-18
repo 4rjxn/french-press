@@ -83,7 +83,7 @@ mod decompress_tester {
     #[test]
     fn test_decompress_function() {
         let data = b"french_press";
-        let compressed_data = compress::compress(data);
+        let compressed_data = compress::compress(data).unwrap();
         let decompressed_data = decompress(&compressed_data).unwrap();
         assert_eq!(data.len(), decompressed_data.len());
         assert_eq!(decompressed_data[0], b'f');
@@ -91,7 +91,7 @@ mod decompress_tester {
     #[test]
     fn test_decompress_function_empty_file() {
         let data = b"";
-        let compressed_data = compress::compress(data);
+        let compressed_data = compress::compress(data).unwrap();
         let decmopressed_data = decompress(&compressed_data).unwrap();
         assert!(decmopressed_data.is_empty());
     }
@@ -99,7 +99,7 @@ mod decompress_tester {
     #[test]
     fn test_decompress_function_single_char_file() {
         let data = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-        let compressed_data = compress::compress(data);
+        let compressed_data = compress::compress(data).unwrap();
         let decompressed_data = decompress(&compressed_data).unwrap();
         assert_eq!(data.len(), decompressed_data.len());
         assert_eq!(decompressed_data[0], b'a');
