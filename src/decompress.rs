@@ -8,15 +8,12 @@ fn read_header(data_bytes: &[u8]) -> Option<([u64; 256], usize)> {
     if &data_bytes[0..4] != b"FRPS" {
         return None;
     }
-    let frequency_count = u16::from_le_bytes(data_bytes[4..6].try_into().unwrap());
+    let frequency_count = u16::from_le_bytes(data_bytes[4..6].try_into().ok()?);
     let mut char_index = 6; //the first charector byte is at 6;
     for _ in 0..frequency_count {
         let index = data_bytes[char_index];
-        freq[index as usize] = u64::from_le_bytes(
-            data_bytes[char_index + 1..char_index + 9]
-                .try_into()
-                .unwrap(),
-        );
+        freq[index as usize] =
+            u64::from_le_bytes(data_bytes[char_index + 1..char_index + 9].try_into().ok()?);
         char_index += 9;
     }
     Some((freq, char_index))
@@ -27,7 +24,7 @@ pub fn decompress(data_bytes: &[u8]) -> Option<Vec<u8>> {
     let (freq, header_end_byte) = read_header(data_bytes)?;
     let total_chars: usize = freq.iter().map(|&count| count as usize).sum();
     if total_chars == 0 {
-        return None;
+        return Some(Vec::new());
     }
     let root = build_tree(&freq).unwrap();
     let mut reader = BitReader::new(&data_bytes[header_end_byte..]);
@@ -92,7 +89,8 @@ mod decompress_tester {
     fn test_decompress_function_empty_file() {
         let data = b"";
         let compressed_data = compress::compress(data);
-        assert!(decompress(&compressed_data).is_none());
+        let decmopressed_data = decompress(&compressed_data).unwrap();
+        assert!(decmopressed_data.is_empty());
     }
 
     #[test]
