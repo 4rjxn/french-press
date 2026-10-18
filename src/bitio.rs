@@ -48,12 +48,6 @@ impl<'a> BitReader<'a> {
             byte_index: 0,
         }
     }
-
-    pub fn read(&self, index: usize) -> bool {
-        let byte_index = index / 8;
-        let shift_count = index % 8;
-        (self.bytes.get(byte_index).unwrap() << shift_count & 0x80) == 0x80
-    }
 }
 
 impl<'a> Iterator for BitReader<'a> {
