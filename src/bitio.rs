@@ -31,7 +31,7 @@ impl<W: Write> BitWriter<W> {
     pub fn finish(mut self) -> io::Result<()> {
         if self.nbits > 0 {
             self.acc <<= 8 - self.nbits;
-            self.writer.write_all(&[self.acc]);
+            self.writer.write_all(&[self.acc])?;
         }
         self.writer.flush()?;
         Ok(())
@@ -77,9 +77,10 @@ mod bit_writer_tester {
     #[test]
     fn direct_byte_write_test() {
         let byte = 0b000101011 as u64;
-        let mut writer = BitWriter::new();
-        writer.write(byte, 9);
-        let out = writer.finish();
+        let mut out = Vec::new();
+        let mut writer = BitWriter::new(&mut out);
+        writer.write(byte, 9).unwrap();
+        writer.finish().unwrap();
         assert_eq!(&out[..], [0b00010101, 0b10000000]);
     }
 

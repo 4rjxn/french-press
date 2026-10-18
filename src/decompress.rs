@@ -85,15 +85,17 @@ mod decompress_tester {
     #[test]
     fn test_decompress_function() {
         let data = b"french_press";
-        let compressed_data = compress::compress(&mut Cursor::new(data)).unwrap();
+        let mut compressed_data = Vec::new();
+        compress::compress(&mut Cursor::new(data), &mut compressed_data).unwrap();
         let decompressed_data = decompress(&compressed_data).unwrap();
-        assert_eq!(data.len(), decompressed_data.len());
-        assert_eq!(decompressed_data[0], b'f');
+        assert_eq!(data.as_slice(), decompressed_data.as_slice());
     }
+
     #[test]
     fn test_decompress_function_empty_file() {
         let data = b"";
-        let compressed_data = compress::compress(&mut Cursor::new(data)).unwrap();
+        let mut compressed_data = Vec::new();
+        compress::compress(&mut Cursor::new(data), &mut compressed_data).unwrap();
         let decmopressed_data = decompress(&compressed_data).unwrap();
         assert!(decmopressed_data.is_empty());
     }
@@ -101,9 +103,9 @@ mod decompress_tester {
     #[test]
     fn test_decompress_function_single_char_file() {
         let data = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-        let compressed_data = compress::compress(&mut Cursor::new(data)).unwrap();
+        let mut compressed_data = Vec::new();
+        compress::compress(&mut Cursor::new(data), &mut compressed_data).unwrap();
         let decompressed_data = decompress(&compressed_data).unwrap();
-        assert_eq!(data.len(), decompressed_data.len());
-        assert_eq!(decompressed_data[0], b'a');
+        assert_eq!(data.as_slice(), decompressed_data.as_slice());
     }
 }
