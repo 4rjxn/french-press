@@ -1,6 +1,7 @@
-use std::io::Cursor;
+use std::io::{Cursor, Read, Seek};
 
 use crate::{
+    BUFFER_SIZE,
     bitio::BitWriter,
     frequency::frequency,
     huffman::{Code, generate_codes},
@@ -25,8 +26,8 @@ fn write_header(frequency: &[u64; 256]) -> Vec<u8> {
     out
 }
 
-pub fn compress(data_bytes: &[u8]) -> Option<Vec<u8>> {
-    let freq = frequency(&mut Cursor::new(data_bytes)).ok()?;
+pub fn compress<R: Read + Seek>(data_bytes: &mut R) -> Option<Vec<u8>> {
+    let freq = frequency(data_bytes).ok()?;
     let mut header = write_header(&freq);
     let Some(huffman_root) = build_tree(&freq) else {
         return Some(header);
@@ -34,9 +35,16 @@ pub fn compress(data_bytes: &[u8]) -> Option<Vec<u8>> {
     let mut code_table = [Code::default(); 256];
     generate_codes(&huffman_root, 0, 0, &mut code_table);
     let mut writer = BitWriter::new();
-    for &byte in data_bytes {
-        let code = code_table[byte as usize];
-        writer.write(code.bits, code.len);
+    let mut read_buffer = [0u8; BUFFER_SIZE];
+    loop {
+        let bytes_read = data_bytes.read(&mut read_buffer).ok()?;
+        if bytes_read == 0 {
+            break;
+        }
+        for &byte in &read_buffer[..bytes_read] {
+            let code = code_table[byte as usize];
+            writer.write(code.bits, code.len);
+        }
     }
     header.extend(writer.finish());
     Some(header)
@@ -62,7 +70,7 @@ mod compress_tester {
     fn test_compression() {
         let data_bytes = b"aaabbc";
         let header = write_header(&frequency(&mut Cursor::new(data_bytes)).unwrap());
-        let compressed_data = compress(data_bytes).unwrap();
+        let compressed_data = compress(&mut Cursor::new(data_bytes)).unwrap();
         assert_eq!(&compressed_data[0..header.len()], &header[..]);
         assert_eq!(&compressed_data[header.len()..], &[0x1F, 0x0]);
     }
