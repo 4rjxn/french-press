@@ -36,17 +36,38 @@ impl BitWriter {
 
 pub struct BitReader<'a> {
     bytes: &'a [u8],
+    bit_index: usize,
+    byte_index: usize,
 }
 
 impl<'a> BitReader<'a> {
     pub fn new(bytes: &'a [u8]) -> Self {
-        Self { bytes }
+        Self {
+            bytes,
+            bit_index: 0,
+            byte_index: 0,
+        }
     }
 
     pub fn read(&self, index: usize) -> bool {
         let byte_index = index / 8;
         let shift_count = index % 8;
         (self.bytes.get(byte_index).unwrap() << shift_count & 0x80) == 0x80
+    }
+}
+
+impl<'a> Iterator for BitReader<'a> {
+    type Item = bool;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let &byte = self.bytes.get(self.byte_index)?;
+        let bit = ((byte << self.bit_index) & 0x80) == 0x80;
+        self.bit_index += 1;
+        if self.bit_index == 8 {
+            self.byte_index += 1;
+            self.bit_index = 0;
+        }
+        Some(bit)
     }
 }
 
@@ -65,11 +86,16 @@ mod bit_writer_tester {
     }
 
     #[test]
-    fn bitio_reader_test() {
-        let reader = BitReader::new(&[43]);
-        let first_value = reader.read(0);
-        let second_value = reader.read(7);
-        assert_eq!(first_value, false);
-        assert_eq!(second_value, true);
+    fn bitio_stream_test() {
+        let mut reader = BitReader::new(&[43]);
+        if let Some(bit) = reader.next() {
+            assert_eq!(bit, false);
+        }
+        if let Some(bit) = reader.next() {
+            assert_eq!(bit, false);
+        }
+        if let Some(bit) = reader.next() {
+            assert_eq!(bit, true);
+        }
     }
 }
