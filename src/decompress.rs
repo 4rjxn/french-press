@@ -24,25 +24,28 @@ pub fn decompress(data_bytes: &[u8]) -> Vec<u8> {
     let (freq, header_end_byte) = read_header(data_bytes);
     let total_chars: usize = freq.iter().map(|&count| count as usize).sum();
     let root = build_tree(&freq).unwrap();
-    let reader = BitReader::new(data_bytes);
+    let mut reader = BitReader::new(&data_bytes[header_end_byte..]);
     let mut pointer = &root;
-    let mut bit_index = header_end_byte * 8;
-    while bit_index < data_bytes.len() * 8 && decompressed_data.len() < total_chars {
+    while decompressed_data.len() < total_chars {
         match pointer {
             crate::tree::Node::Leaf { byte, .. } => {
                 decompressed_data.push(*byte);
                 pointer = &root;
+                continue;
             }
-            crate::tree::Node::Internal { .. } => {
-                match reader.read(bit_index) {
-                    true => pointer = pointer.right().unwrap(),
-                    false => pointer = pointer.left().unwrap(),
+            crate::tree::Node::Internal { .. } => match reader.next() {
+                Some(bit) => {
+                    if bit {
+                        pointer = pointer.right().unwrap();
+                    } else {
+                        pointer = pointer.left().unwrap();
+                    }
                 }
-                bit_index += 1;
-            }
+                None => break,
+            },
         }
     }
-    println!("count: {} total_chars: {}", bit_index / 8, total_chars);
+
     decompressed_data
 }
 
