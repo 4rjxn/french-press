@@ -34,15 +34,13 @@ impl BitWriter {
     }
 }
 
-pub struct BitReader {
-    bytes: Vec<u8>,
+pub struct BitReader<'a> {
+    bytes: &'a [u8],
 }
 
-impl BitReader {
-    pub fn new(bytes: &[u8]) -> BitReader {
-        return BitReader {
-            bytes: bytes.to_vec(),
-        };
+impl<'a> BitReader<'a> {
+    pub fn new(bytes: &'a [u8]) -> Self {
+        Self { bytes }
     }
 
     pub fn read(&self, index: usize) -> bool {
