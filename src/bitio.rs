@@ -1,36 +1,40 @@
-pub struct BitWriter {
-    bytes: Vec<u8>,
+use std::io::{self, Write};
+
+pub struct BitWriter<W: Write> {
+    writer: W,
     acc: u8,   //accumulator
     nbits: u8, //number of valid bit accumulator has
 }
 
-impl BitWriter {
-    pub fn new() -> BitWriter {
-        BitWriter {
-            bytes: Vec::new(),
+impl<W: Write> BitWriter<W> {
+    pub fn new(writer: W) -> Self {
+        Self {
+            writer: writer,
             acc: 0,
             nbits: 0,
         }
     }
-    pub fn write(&mut self, bits: u64, len: u8) {
+    pub fn write(&mut self, bits: u64, len: u8) -> io::Result<()> {
         for i in (0..len).rev() {
             let bit = ((bits >> i) & 1) as u8;
             self.acc = (self.acc << 1) | bit;
             self.nbits += 1;
             if self.nbits == 8 {
-                self.bytes.push(self.acc);
+                self.writer.write_all(&[self.acc])?;
                 self.acc = 0;
                 self.nbits = 0;
             }
         }
+        Ok(())
     }
 
-    pub fn finish(mut self) -> Vec<u8> {
+    pub fn finish(mut self) -> io::Result<()> {
         if self.nbits > 0 {
             self.acc <<= 8 - self.nbits;
-            self.bytes.push(self.acc);
+            self.writer.write_all(&[self.acc]);
         }
-        self.bytes
+        self.writer.flush()?;
+        Ok(())
     }
 }
 
