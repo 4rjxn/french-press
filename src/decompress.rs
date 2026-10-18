@@ -5,6 +5,9 @@ fn read_header(data_bytes: &[u8]) -> Option<([u64; 256], usize)> {
     if data_bytes.len() < 6 {
         return None;
     }
+    if &data_bytes[0..4] != b"FRPS" {
+        return None;
+    }
     let frequency_count = u16::from_le_bytes(data_bytes[4..6].try_into().unwrap());
     let mut char_index = 6; //the first charector byte is at 6;
     for _ in 0..frequency_count {
