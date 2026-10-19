@@ -23,9 +23,9 @@ no input from stdin.
 ## File Layout.(draft)
 
 Header
-* u32: magic byte to verify identity.
-* u16: stores the number of bytes.
-* (u8,u64): the frequency table
+* u32: magic byte to verify identity. (4 bytes)
+* u16: stores the number of charector frequencies. (2 bytes)
+* (u8,u64): the frequency table (9 byte each)
 
 Body
 * compressed data.
