@@ -10,7 +10,7 @@ pub fn generate_codes(node: &Node, bits: u64, len: u8, table: &mut [Code; 256]) 
     match node {
         Node::Leaf { byte, .. } => {
             let len = len.max(1);
-            table[*byte as usize] = Code { bits: bits, len };
+            table[*byte as usize] = Code { bits, len };
         }
         Node::Internal { left, right, .. } => {
             generate_codes(left, bits << 1, len + 1, table);
