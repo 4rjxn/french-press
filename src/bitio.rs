@@ -1,8 +1,8 @@
-use std::io::{self, Write};
+use std::io::{self, Bytes, Write};
 
 pub struct BitWriter<W: Write> {
     writer: W,
-    acc: u8,   //accumulator
+    acc: u64,  //accumulator
     nbits: u8, //number of valid bit accumulator has
 }
 
@@ -15,23 +15,21 @@ impl<W: Write> BitWriter<W> {
         }
     }
     pub fn write(&mut self, bits: u64, len: u8) -> io::Result<()> {
-        for i in (0..len).rev() {
-            let bit = ((bits >> i) & 1) as u8;
-            self.acc = (self.acc << 1) | bit;
-            self.nbits += 1;
-            if self.nbits == 8 {
-                self.writer.write_all(&[self.acc])?;
-                self.acc = 0;
-                self.nbits = 0;
-            }
+        self.acc = (self.acc << len) | bits;
+        self.nbits += len;
+        while self.nbits >= 8 {
+            self.nbits -= 8;
+            let byte = (self.acc >> self.nbits) as u8;
+            self.writer.write_all(&[byte])?;
         }
         Ok(())
     }
 
     pub fn finish(mut self) -> io::Result<()> {
         if self.nbits > 0 {
-            self.acc <<= 8 - self.nbits;
-            self.writer.write_all(&[self.acc])?;
+            let byte = (self.acc << (8 - self.nbits)) as u8;
+            self.writer.write_all(&[byte])?;
+            self.nbits = 0;
         }
         self.writer.flush()?;
         Ok(())
